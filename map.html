@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geocoding service</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+	<script src="data.json"></script>
+	<script src="mapstyle.json"></script>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+		width:60%;
+        height: 600px;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .left-fixed_right-auto{
+    width: 100%;
+    height: 100%;
+    clear: both;
+    display: inline-block;
+    margin-top: 20px;
+}
+.left{
+    position:relative;
+    float:left;
+    width:300px;
+    height: 100%;
+    margin-right:-300px;
+    background: #fbfbfb;
+	font-size: 13px;
+	color: #333;
+}
+.right{
+    float:right;
+    width:100%;
+    height: 100%;
+}
+.right-content{
+    margin-left:300px;
+    height: 100%;
+}
+.grid{ margin:2em; border-collapse:collapse }
+.filtertitle { margin:2em; border-collapse:collapse;font-weight: 700;  }
+.grid td {
+    cursor:pointer;
+    width:45px; height:45px;
+    border:1px solid #d2cbcb;
+    text-align:center;
+    font-family:sans-serif; font-size:13px
+}
+.grid td.clicked {
+    background-color:#00c4ff;
+    font-weight:bold; color:#fbfbfb;
+}
+    </style>
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+	<script type="text/javascript" src="bootstrap.js"></script>
+  </head>
+  <body>
+  <h3>Beecology Map Demo Test</h3>
+   <div class="left-fixed_right-auto">
+            <div class="left">
+                <div>
+						<input id="address" type="textbox" value="Worcester,MA">
+						<input id="submit" type="button" value="Show the result">
+				</div>
+				<div id="container">
+					<h5 class="filtertitle">Month</h5>
+					<table class="grid filters">
+					
+						<tr>
+							<td data-filterby="date" data-filtervalue="Jan">Jan</td>
+							<td data-filterby="date" data-filtervalue="Feb">Feb</td>
+							<td data-filterby="date" data-filtervalue="Mar">Mar</td>
+							<td data-filterby="date" data-filtervalue="Apr">Apr</td>
+						</tr>
+						<tr>
+							<td data-filterby="date" data-filtervalue="May">May</td>
+							<td data-filterby="date" data-filtervalue="Jun">Jun</td>
+							<td data-filterby="date" data-filtervalue="Jul">Jul</td>
+							<td data-filterby="date" data-filtervalue="Aug">Aug</td>
+						</tr>
+						<tr>
+							<td data-filterby="date" data-filtervalue="Sep">Sep</td>
+							<td data-filterby="date" data-filtervalue="Oct">Oct</td>
+							<td data-filterby="date" data-filtervalue="Nov">Nov</td>
+							<td data-filterby="date" data-filtervalue="Dec">Dec</td>
+						</tr>
+					</table>
+					
+					<h5 class="filtertitle">Species</h5>
+					<table class="grid filters">
+					
+						<tr style="width:80px;height:20px">
+							<td  data-filterby="species" data-filtervalue="type1"><img style="margin:2px;width:20px;height:20px" src="img/type3.png"/>greseocollis</td>
+						</tr>
+						<tr style="width:80px;height:20px">
+							<td style="width:40px;height:20px" data-filterby="species" data-filtervalue="type2"><img style="margin:2px;width:20px;height:20px" src="img/type5.png"/>bimaculatus</td>
+						</tr>
+						<tr style="width:80px;height:20px">
+							<td style="width:40px;height:20px" data-filterby="species" data-filtervalue="type3"><img style="margin:2px;width:20px;height:20px" src="img/type6.png"/></br>affinis</td>
+						</tr>
+					</table>
+				</div>
+            </div>
+            <div class="right">
+                <div class="right-content">
+                  <div id="map"></div>
+                </div>
+            </div>
+    </div>
+
+
+	
+    
+    <script>
+	$('.dropdown-toggle').dropdown();
+	
+
+	
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 8,
+          center: {lat:42.2625932,lng : -71.8022934},
+			styles:styles
+        });
+		var infoWindows = []
+		var icons = {
+          type1: {
+             icon : {
+				url: "img/type3.png", // url
+				scaledSize: new google.maps.Size(20, 20), // scaled size
+			}
+          },
+          type2: {
+			icon : {
+				url: "img/type5.png", // url
+				scaledSize: new google.maps.Size(20, 20), // scaled size
+			}
+          },
+          type3: {
+             icon : {
+				url: "img/type6.png", // url
+				scaledSize: new google.maps.Size(20, 20), // scaled size
+			}
+          }
+        };
+		var markers = [];
+		 data.forEach(function(d) {
+          var marker = new google.maps.Marker({
+            position:  new google.maps.LatLng(d.latitude,d.longitude),
+            icon: icons[d.type].icon,
+            map: map,
+			month:[d.Month],
+			type:[d.type]
+			});
+			var fn = markerClickFunction(map, d, marker.position);
+			google.maps.event.addListener(marker, 'click', fn);
+			markers.push(marker);
+		  });
+		  /* var markerCluster = new MarkerClusterer(map, markers,
+            {
+				maxZoom: 1,
+				//gridSize: size,
+				//styles: styles[style],
+				imagePath: 'https://googlemaps.github.io/js-marker-clusterer/images/m'
+			});
+			*/
+			
+		  	$(document).on('click', '.filters td', function(event) {
+				event.preventDefault();
+				$(this).toggleClass('clicked');
+				// create an array of active filters
+				var activeFilters = [];
+				$(".filters td.clicked").each(function() {
+				activeFilters.push({
+					by: $(this).data("filterby"),
+					value: $(this).data("filtervalue").toString()
+					});
+				});
+
+			if (activeFilters.length === 0) { // if there are no active filters, show all markers
+				for (var i = 0; i < markers.length; i++) {
+					markers[i].setMap(map);
+				}
+			} else {
+				for (var i = 0; i < markers.length; i++) { // for each marker
+					var marker = markers[i]; // just to make the next code easier
+					var missingActiveFilter = true;
+					// check if marker has every active filter
+					for (var j = 0; j < activeFilters.length; j++) {
+						var filter = activeFilters[j];
+						if (filter.by === "date" && marker.month.indexOf(filter.value) > -1 || filter.by === "species" && marker.type.indexOf(filter.value) > -1) {
+						missingActiveFilter = false;
+						break;
+						}
+					}
+
+					if (missingActiveFilter) {
+						marker.setMap(null);
+					} else {
+						marker.setMap(map);
+					}
+				}
+			}
+			});
+		 /*var marker = new google.maps.Marker({
+          position: {lat:42.2625932,lng : -71.8022934},//worcester latlon
+          map: map
+        });*/
+        var geocoder = new google.maps.Geocoder();
+
+        document.getElementById('submit').addEventListener('click', function() {
+          geocodeAddress(geocoder, map);
+        });
+		
+      }
+	  
+	  function markerClickFunction(map,markerinfo,position){
+	   return function(e) {
+		e.cancelBubble = true;
+		e.returnValue = false;
+		if (e.stopPropagation) {
+		e.stopPropagation();
+		e.preventDefault();
+		}
+		
+		var pic_url = markerinfo.photo_file_url;
+		var uploader = markerinfo.owner_name;
+		var date = markerinfo.upload_date;
+		var flower_color = markerinfo.flower_color;
+		var abdomen_color = markerinfo.abdomen_color;
+		var head_color = markerinfo.head_color;
+		var thorax_color = markerinfo.thorax_color;
+		var species = "";
+		var type = markerinfo.type;
+		if(type == 'type1')
+			species = "greseocollis";
+		else if (type == 'type2')
+			species = "bimaculatus";
+		else if (type == 'type3')
+			species = "affinis";
+			
+		
+		var infoHtml = '<div class="info" style="width:200px;height:450px"><h3>' +species +
+		'</h3><div class="info-body">' +
+		'<p style="font:10px;color:gray;">'+date+'</p>'+
+		'<img style="width:200px;height:200px" src="img/' +
+		pic_url + '" class="info-img"/></div>' +
+		'<br/>'+
+		'<div class="info-base"><p><b>Recorder</b>:'+uploader+'</p>'+
+		'<p><b>Flower Color:</b> <img style="width:15px;height:15px" src="img/' +
+		flower_color + '.png" class="info-img"/>' +'</p>'+
+		'<p><b>Head Color:</b> <img style="width:45px;height:30px" src="img/' +
+		head_color + '.png" class="info-img"/>' +'</p>'+
+		'<p><b>Thorax Color:</b> <img style="width:45px;height:30px" src="img/' +
+		thorax_color + '.png" class="info-img"/>' +'</p>'+
+		'<p><b>Abdomen Color:</b> <img style="width:40px;height:30px" src="img/' +
+		abdomen_color + '.png" class="info-img"/>' +'</p>'+
+		'</div></div>';
+
+		var infoWindow = new google.maps.InfoWindow();
+		infoWindow.setContent(infoHtml);
+		infoWindow.setPosition(position);
+		infoWindow.open(map);
+			};
+	  }
+
+      function geocodeAddress(geocoder, resultsMap) {
+        var address = document.getElementById('address').value;
+        geocoder.geocode({'address': address}, function(results, status) {
+          if (status === 'OK') {
+            resultsMap.setCenter(results[0].geometry.location);
+            /*var marker = new google.maps.Marker({
+              map: resultsMap,
+              position: results[0].geometry.location
+            });*/
+          } else {
+            alert('Geocode was not successful for the following reason: ' + status);
+          }
+        });
+      }
+
+    </script>
+	<script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js">
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoS9KEVUbBoUqut5pWt0paxf6ebROU8qs&callback=initMap&language=en">
+    </script>
+	
+  </body>
+</html>
